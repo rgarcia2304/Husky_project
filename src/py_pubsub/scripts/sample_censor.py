@@ -5,11 +5,13 @@ from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import String  # For publishing sensor state as string
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import PointCloud2, Temperature, NavSatFix
-
+from sbg_driver.msg import SbgGpsPos, SbgEkfNav
 from geometry_msgs.msg import TwistStamped
 import json
 from interface.msg import ErrorMsg
 import time
+import psutil
+import subprocess
 
 class SensorNode(Node):
     def __init__(self):
@@ -21,7 +23,9 @@ class SensorNode(Node):
             'temp_sensor': None,
             'velocity_sensor': None,
             'lidar_frequency': None,
-            'rtk_status': None
+            'rtk_status': None,
+            'gps_pos_status': None,
+            'gps_pos_status2': None,
         }
         
         # Frequency monitoring attributes
@@ -35,7 +39,12 @@ class SensorNode(Node):
         self.random_subscriber = self.create_subscription(TwistStamped,'/hus/imu/velocity',self.random_callback,10)
         self.rtk_gps_subscriber = self.create_subscription(NavSatFix,'/hus/imu/nav_sat_fix',self.rtk_status_callback,10)
 
-        self.get_logger().info('Subscription to /hus/imu/nav_sat_fix has been created')
+        #Both of these are used to validate the positon solution
+        self.gps_position_status_subscriber = self.create_subscription(SbgGpsPos,'/hus/sbg/gps_pos',self.gps_postion_status_callback,10)
+        self.gps_position_status_subscriber2 = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.gps_postion_status_callback2,10)
+        
+
+        #self.get_logger().info('Subscription to /hus/imu/nav_sat_fix has been created')
         self.rtk_gps_subscriber # prevent unused variable warning
 
         
@@ -49,9 +58,17 @@ class SensorNode(Node):
 
     # Initialize the time of the last LiDAR message
         self.last_lidar_time = None
+        self.rosbag_check_timer = self.create_timer(5.0, self.check_rosbag_recording)
+    def gps_postion_status_callback(self, msg):
+        self.sensor_states['gps_pos_status'] = msg.status.status
+    
+    def gps_postion_status_callback2(self, msg):
+        self.get_logger().info('Received a message on /hus/imu/nav_sat_fix')
+        self.sensor_states['gps_pos_status2'] = msg.status.solution_mode
+        self.get_logger().info(f'Frequency_published {msg.status.solution_mode}')
 
     def rtk_status_callback(self,msg):
-        self.get_logger().info('Received a message on /hus/imu/nav_sat_fix')
+        #self.get_logger().info('Received a message on /hus/imu/nav_sat_fix')
         self.sensor_states['rtk_status'] = msg.status.status
         #self.get_logger().info(f'Current Status: {msg.status.status}')
     def linear_velocity_callback(self, msg):
@@ -66,8 +83,25 @@ class SensorNode(Node):
         current_time_seconds = self.get_clock().now().nanoseconds
         time_in_between_published_msgs = (current_time_seconds)-self.last_time_msg_published
         hz_calculator = (1/time_in_between_published_msgs) / .000000001
-        self.get_logger().info(f'Frequency_published {hz_calculator}')
+       # self.get_logger().info(f'Frequency_published {hz_calculator}')
         self.last_time_msg_published = current_time_seconds
+
+    def check_rosbag_recording(self):
+        if self.is_rosbag_recording():
+            self.get_logger().info("Rosbag is recording")
+            self.sensor_states['rosbag_recording'] = True
+        else:
+            self.get_logger().info("Rosbag is not recording")
+            self.sensor_states['rosbag_recording'] = False
+
+    def is_rosbag_recording(self):
+        """Check if ros2 bag record is running."""
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            if 'ros2' in proc.info['cmdline'] and 'bag' in proc.info['cmdline'] and 'record' in proc.info['cmdline']:
+                return True
+        return False
+
+    
 
     def check_and_publish(self):
         state_msg = String()
@@ -78,6 +112,11 @@ class SensorNode(Node):
     def publish_alerts(self):
         temperature = self.sensor_states.get('temp_sensor')
         x_velocity = self.sensor_states.get('linear_velocity_sensor')
+        rtk_status_check = self.sensor_states.get('rtk_status')
+        gps_pos_status_check = self.sensor_states.get('gps_pos_status')
+        print(self.sensor_states.get('gps_pos_status2'))
+        gps_pos_status_check2 = self.sensor_states.get('gps_pos_status2')
+
         alert_msg = ErrorMsg()
         
         if temperature is not None:
@@ -87,7 +126,30 @@ class SensorNode(Node):
         if x_velocity is not None:
             alert_msg.linear_velocity = x_velocity
             alert_msg.too_fast = x_velocity > 0.01
-           
+        
+        if rtk_status_check is not None:
+            #self.get_logger().info(f'status number {rtk_status_check}')
+            if rtk_status_check !=0:
+
+                alert_msg.rtk_status = False
+                self.get_logger().info(f'status number {alert_msg.rtk_status}')
+            else:
+                
+                alert_msg.rtk_status= True
+                self.get_logger().info(f'status number {alert_msg.rtk_status}')
+        '''
+        if gps_pos_status_check >=7 & gps_pos_status_check:
+            alert_msg.gps_position_status_validator= True
+        else:
+            alert_msg.gps_position_status_validator= False
+
+        '''
+        if gps_pos_status_check2 ==4:
+            alert_msg.gps_position_status_validator= True
+        else:
+            alert_msg.gps_position_status_validator= False
+
+        self.get_logger().info(f'GPS STATUS {alert_msg.gps_position_status_validator}')
 
         self.alert_publisher.publish(alert_msg)
         #self.get_logger().info(f'ERROR MSG: current TEMP {alert_msg.current_temperature} too high: {alert_msg.too_high}')

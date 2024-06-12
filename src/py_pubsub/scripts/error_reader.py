@@ -14,8 +14,10 @@ class SensorReader(Node):
         self.topic_monitor = self.create_subscription(String,'/state_topic',self.monitor_callback,10)
         self.temp_error_reader = self.create_subscription(ErrorMsg, 'temperature_alert',self.temperature_monitor_callback,10 )
         self.velocity_error_reader = self.create_subscription(ErrorMsg, 'temperature_alert',self.linear_velocity_monitor_callback,10 )
+        self.rtk_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.rtk_status_monitor_callback,10)
         self.current_temp_state = None
         self.current_velocity_state = None
+        self.current_rtk_status = None
         self.init_ui()
 
     def monitor_callback(self, msg):
@@ -40,8 +42,10 @@ class SensorReader(Node):
     
         self.linear_velocity_light= self.canvas.create_oval(350, 50, 450, 150, fill="yellow")
         self.canvas.create_text(350, 180, text="Monitoring: Velocity Alert", anchor=tk.CENTER)
-    
-        
+
+        self.rtk_light= self.canvas.create_oval(350, 250, 450, 350, fill="yellow")
+        self.canvas.create_text(485, 485, text="Monitoring: rtk_status Alert", anchor=tk.CENTER)
+
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()
@@ -54,7 +58,7 @@ class SensorReader(Node):
         else:
             self.update_temp_light("green")
 
-        self.get_logger().info(f'\nReceived temp state {msg.too_high}')
+        #self.get_logger().info(f'\nReceived temp state {msg.too_high}')
 
     def linear_velocity_monitor_callback(self,msg):
         if msg.too_fast ==True:
@@ -63,13 +67,26 @@ class SensorReader(Node):
                 self.update_linear_velocity_light("red")
         else:
             self.update_linear_velocity_light("green")
-        self.get_logger().info(f'Received state {msg.too_fast}\n')
+        #self.get_logger().info(f'Received state {msg.too_fast}\n')
+
+    def rtk_status_monitor_callback(self,msg):
+
+        if msg.rtk_status==False:
+            self.current_rtk_status= False
+            if self.current_rtk_status == False:
+                self.update_rtk_status_light("red")
+        else:
+            self.update_rtk_status_light("green")
+        self.get_logger().info(f'Received state {msg.rtk_status}\n')
 
     def update_temp_light(self, color):
         self.canvas.itemconfig(self.temp_light, fill=color)
 
     def update_linear_velocity_light(self, color):
         self.canvas.itemconfig(self.linear_velocity_light, fill=color)
+
+    def update_rtk_status_light(self, color):
+        self.canvas.itemconfig(self.rtk_light, fill=color)
 
     def check_ros(self):
         rclpy.spin_once(self,timeout_sec=0.1)
