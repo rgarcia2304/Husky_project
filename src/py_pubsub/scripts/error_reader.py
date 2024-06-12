@@ -12,11 +12,8 @@ class SensorReader(Node):
 
         # Create subscribers
         self.topic_monitor = self.create_subscription(String,'/state_topic',self.monitor_callback,10)
-        self.temp_error_reader = self.create_subscription(ErrorMsg, 'temperature_alert',self.temperature_monitor_callback,10 )
-        self.velocity_error_reader = self.create_subscription(ErrorMsg, 'temperature_alert',self.linear_velocity_monitor_callback,10 )
+        #rtk information
         self.rtk_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.rtk_status_monitor_callback,10)
-        self.current_temp_state = None
-        self.current_velocity_state = None
         self.current_rtk_status = None
         self.init_ui()
 
@@ -34,15 +31,8 @@ class SensorReader(Node):
         self.root.title("Error Display")
         self.canvas = tk.Canvas(self.root, width=500, height=500)
         self.canvas.pack()
-        #Temperature light Montior
-        self.temp_light = self.canvas.create_oval(50, 50, 150, 150, fill="yellow")
-        self.canvas.create_text(100, 180, text="Monitoring: Temperature Alert", anchor=tk.CENTER)
-        
-        #Velocity Light Monitor
-    
-        self.linear_velocity_light= self.canvas.create_oval(350, 50, 450, 150, fill="yellow")
-        self.canvas.create_text(350, 180, text="Monitoring: Velocity Alert", anchor=tk.CENTER)
 
+        #rtk display
         self.rtk_light= self.canvas.create_oval(350, 250, 450, 350, fill="yellow")
         self.canvas.create_text(485, 485, text="Monitoring: rtk_status Alert", anchor=tk.CENTER)
 
@@ -50,24 +40,6 @@ class SensorReader(Node):
         self.root.after(100, self.check_ros)
         self.root.mainloop()
         
-    def temperature_monitor_callback(self,msg):
-        if msg.too_high ==True:
-            self.current_temp_state = True
-            if self.current_temp_state == True: 
-                self.update_temp_light("red")
-        else:
-            self.update_temp_light("green")
-
-        #self.get_logger().info(f'\nReceived temp state {msg.too_high}')
-
-    def linear_velocity_monitor_callback(self,msg):
-        if msg.too_fast ==True:
-            self.current_velocity_state = True
-            if self.current_velocity_state == True:
-                self.update_linear_velocity_light("red")
-        else:
-            self.update_linear_velocity_light("green")
-        #self.get_logger().info(f'Received state {msg.too_fast}\n')
 
     def rtk_status_monitor_callback(self,msg):
 
@@ -79,11 +51,6 @@ class SensorReader(Node):
             self.update_rtk_status_light("green")
         self.get_logger().info(f'Received state {msg.rtk_status}\n')
 
-    def update_temp_light(self, color):
-        self.canvas.itemconfig(self.temp_light, fill=color)
-
-    def update_linear_velocity_light(self, color):
-        self.canvas.itemconfig(self.linear_velocity_light, fill=color)
 
     def update_rtk_status_light(self, color):
         self.canvas.itemconfig(self.rtk_light, fill=color)

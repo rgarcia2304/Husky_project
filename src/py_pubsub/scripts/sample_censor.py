@@ -19,9 +19,6 @@ class SensorNode(Node):
 
         # Initialize dictionary to store sensor states
         self.sensor_states = {
-            'linear_velocity_sensor': None,
-            'temp_sensor': None,
-            'velocity_sensor': None,
             'lidar_frequency': None,
             'rtk_status': None,
             'gps_pos_status': None,
@@ -32,13 +29,11 @@ class SensorNode(Node):
         self.last_time_msg_published = 0
 
 
-        # Create subscribers
-        self.linear_velocity_subscriber = self.create_subscription(Odometry,'/hus/platform/odom',self.linear_velocity_callback,10)
-        self.lidar_frequency_subscriber= self.create_subscription(PointCloud2,'/hus/ouster/points', self.lidar_callback, qos_profile_sensor_data)
-        self.temperature_subscriber = self.create_subscription(Temperature,'/hus/imu/temp',self.temp_callback,10)
-        self.random_subscriber = self.create_subscription(TwistStamped,'/hus/imu/velocity',self.random_callback,10)
-        self.rtk_gps_subscriber = self.create_subscription(NavSatFix,'/hus/imu/nav_sat_fix',self.rtk_status_callback,10)
 
+        # Create subscribers
+    
+        self.lidar_frequency_subscriber= self.create_subscription(PointCloud2,'/hus/ouster/points', self.lidar_callback, qos_profile_sensor_data)
+        self.rtk_gps_subscriber = self.create_subscription(NavSatFix,'/hus/imu/nav_sat_fix',self.rtk_status_callback,10)
         #Both of these are used to validate the positon solution
         self.gps_position_status_subscriber = self.create_subscription(SbgGpsPos,'/hus/sbg/gps_pos',self.gps_postion_status_callback,10)
         self.gps_position_status_subscriber2 = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.gps_postion_status_callback2,10)
@@ -71,14 +66,7 @@ class SensorNode(Node):
         #self.get_logger().info('Received a message on /hus/imu/nav_sat_fix')
         self.sensor_states['rtk_status'] = msg.status.status
         #self.get_logger().info(f'Current Status: {msg.status.status}')
-    def linear_velocity_callback(self, msg):
-        self.sensor_states['linear_velocity_sensor'] = msg.twist.twist.linear.x  # Accessing the linear x value
 
-    def temp_callback(self, msg):
-        self.sensor_states['temp_sensor'] = msg.temperature  # Accessing the temperature value
-
-    def random_callback(self, msg):
-        self.sensor_states['velocity_sensor'] = msg.twist.angular.x # Accessing the angular x value
     def lidar_callback(self, msg):
         current_time_seconds = self.get_clock().now().nanoseconds
         time_in_between_published_msgs = (current_time_seconds)-self.last_time_msg_published
@@ -101,8 +89,6 @@ class SensorNode(Node):
                 return True
         return False
 
-    
-
     def check_and_publish(self):
         state_msg = String()
         # Convert dictionary to JSON string for publishing
@@ -110,22 +96,10 @@ class SensorNode(Node):
         self.states_publisher.publish(state_msg)
 
     def publish_alerts(self):
-        temperature = self.sensor_states.get('temp_sensor')
-        x_velocity = self.sensor_states.get('linear_velocity_sensor')
         rtk_status_check = self.sensor_states.get('rtk_status')
         gps_pos_status_check = self.sensor_states.get('gps_pos_status')
-        print(self.sensor_states.get('gps_pos_status2'))
         gps_pos_status_check2 = self.sensor_states.get('gps_pos_status2')
-
         alert_msg = ErrorMsg()
-        
-        if temperature is not None:
-            alert_msg.current_temperature = temperature
-            alert_msg.too_high = temperature > 34.4  # Set threshold for too high
-        
-        if x_velocity is not None:
-            alert_msg.linear_velocity = x_velocity
-            alert_msg.too_fast = x_velocity > 0.01
         
         if rtk_status_check is not None:
             #self.get_logger().info(f'status number {rtk_status_check}')
