@@ -14,7 +14,14 @@ class SensorReader(Node):
         self.topic_monitor = self.create_subscription(String,'/state_topic',self.monitor_callback,10)
         #rtk information
         self.rtk_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.rtk_status_monitor_callback,10)
+        self.rtk_lidar_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.lidar_status_monitor_callback,10)
+        self.localiation1_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization1_status_monitor_callback,10)
+        self.localiation2_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization2_status_monitor_callback,10)
+
         self.current_rtk_status = None
+        self.current_lidar_status = None
+        self.current_localization1_status = None
+        self.current_localization2_status = None
         self.init_ui()
 
     def monitor_callback(self, msg):
@@ -33,9 +40,17 @@ class SensorReader(Node):
         self.canvas.pack()
 
         #rtk display
-        self.rtk_light= self.canvas.create_oval(350, 250, 450, 350, fill="yellow")
-        self.canvas.create_text(485, 485, text="Monitoring: rtk_status Alert", anchor=tk.CENTER)
-
+        self.rtk_light= self.canvas.create_oval(50, 50, 150, 150, fill="yellow")
+        self.canvas.create_text(100, 180, text="Monitoring: rtk_status Alert", anchor=tk.CENTER)
+        #lidar light
+        self.lidar_light= self.canvas.create_oval(150, 50, 250, 150, fill="yellow")
+        self.canvas.create_text(300, 180, text="Monitoring: lidar_status Alert", anchor=tk.CENTER)
+        #localization check light 1
+        self.localization_light1= self.canvas.create_oval(50, 250, 150, 350, fill="yellow")
+        self.canvas.create_text(100, 380, text="Monitoring: localiaztion1 Alert", anchor=tk.CENTER)
+        #localization check light2
+        self.localization_light2= self.canvas.create_oval(150, 250, 250, 350, fill="yellow")
+        self.canvas.create_text(300, 380, text="Monitoring: localization2 Alert", anchor=tk.CENTER)
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()
@@ -54,6 +69,48 @@ class SensorReader(Node):
 
     def update_rtk_status_light(self, color):
         self.canvas.itemconfig(self.rtk_light, fill=color)
+
+    def lidar_status_monitor_callback(self,msg):
+
+        if msg.lidar_frequency_validator==False:
+            self.current_lidar_status= False
+            if self.current_lidar_status== False:
+                self.update_lidar_status_light("red")
+        else:
+            self.update_lidar_status_light("green")
+        self.get_logger().info(f'Received state {msg.lidar_frequency_validator}\n')
+
+
+    def update_lidar_status_light(self, color):
+        self.canvas.itemconfig(self.lidar_light, fill=color)
+
+    def localization1_status_monitor_callback(self,msg):
+
+        if msg.gps_position_status_validator==False:
+            self.current_localization1_status= False
+            if self.current_localization1_status== False:
+                self.update_localization1_status_light("red")
+        else:
+            self.update_localization1_status_light("green")
+        self.get_logger().info(f'Received state {msg.gps_position_status_validator}\n')
+
+
+    def update_localization1_status_light(self, color):
+        self.canvas.itemconfig(self.localization_light1, fill=color)
+
+    def localization2_status_monitor_callback(self,msg):
+
+        if msg.gps_position_status_validator2==False:
+            self.current_localization2_status= False
+            if self.current_localization2_status== False:
+                self.update_localization2_status_light("red")
+        else:
+            self.update_localization2_status_light("green")
+        self.get_logger().info(f'Received state {msg.gps_position_status_validator2}\n')
+
+
+    def update_localization2_status_light(self, color):
+        self.canvas.itemconfig(self.localization_light2, fill=color)
 
     def check_ros(self):
         rclpy.spin_once(self,timeout_sec=0.1)
