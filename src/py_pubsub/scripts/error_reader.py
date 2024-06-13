@@ -22,12 +22,14 @@ class SensorReader(Node):
         self.current_lidar_status = None
         self.current_localization1_status = None
         self.current_localization2_status = None
+        self.access_dictionary = None
         self.init_ui()
 
     def monitor_callback(self, msg):
         try:
             # Convert the JSON string back to a dictionary
             state_dict = json.loads(msg.data)
+            self.access_dictionary = state_dict
             self.get_logger().info(f'Received state dictionary: {state_dict}')
         except json.JSONDecodeError as e:
             self.get_logger().error(f'Failed to decode JSON string: {e}')
@@ -36,21 +38,21 @@ class SensorReader(Node):
     def init_ui(self):
         self.root = tk.Tk()
         self.root.title("Error Display")
-        self.canvas = tk.Canvas(self.root, width=500, height=500)
+        self.canvas = tk.Canvas(self.root, width=500, height=100)
         self.canvas.pack()
 
         #rtk display
-        self.rtk_light= self.canvas.create_oval(50, 50, 150, 150, fill="yellow")
-        self.canvas.create_text(100, 180, text="Monitoring: rtk_status Alert", anchor=tk.CENTER)
+        self.rtk_light= self.canvas.create_oval(30, 30, 60, 60, fill="yellow")
+        self.canvas.create_text(40, 80, text=f"rtk_status", anchor=tk.CENTER)
         #lidar light
-        self.lidar_light= self.canvas.create_oval(150, 50, 250, 150, fill="yellow")
-        self.canvas.create_text(300, 180, text="Monitoring: lidar_status Alert", anchor=tk.CENTER)
+        self.lidar_light= self.canvas.create_oval(130, 30, 160, 60, fill="yellow")
+        self.canvas.create_text(140, 80, text=f"lidar_status", anchor=tk.CENTER)
         #localization check light 1
-        self.localization_light1= self.canvas.create_oval(50, 250, 150, 350, fill="yellow")
-        self.canvas.create_text(100, 380, text="Monitoring: localiaztion1 Alert", anchor=tk.CENTER)
+        self.localization_light1= self.canvas.create_oval(230, 30, 260, 60, fill="yellow")
+        self.canvas.create_text(240, 80, text=f"localiaztion1", anchor=tk.CENTER)
         #localization check light2
-        self.localization_light2= self.canvas.create_oval(150, 250, 250, 350, fill="yellow")
-        self.canvas.create_text(300, 380, text="Monitoring: localization2 Alert", anchor=tk.CENTER)
+        self.localization_light2= self.canvas.create_oval(330, 30, 360, 60, fill="yellow")
+        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()

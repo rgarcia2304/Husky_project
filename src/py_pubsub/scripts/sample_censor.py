@@ -23,6 +23,7 @@ class SensorNode(Node):
             'rtk_status': None,
             'gps_pos_status': None,
             'gps_pos_status2': None,
+            'x_pos_status': None,
         }
         
         # Frequency monitoring attributes
@@ -34,7 +35,8 @@ class SensorNode(Node):
         #Both of these are used to validate the positon solution
         self.gps_position_status_subscriber = self.create_subscription(SbgGpsPos,'/hus/sbg/gps_pos',self.gps_postion_status_callback,10)
         self.gps_position_status_subscriber2 = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.gps_postion_status_callback2,10)
-
+        self.x_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.x_postion_status_callback,10)
+        #self.gps_position_status_subscriber2 = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.gps_postion_status_callback2,10)
 
         self.rtk_gps_subscriber # prevent unused variable warning
         # Create publisher
@@ -48,15 +50,18 @@ class SensorNode(Node):
     # Initialize the time of the last LiDAR message
         self.last_lidar_time = None
         self.rosbag_check_timer = self.create_timer(5.0, self.check_rosbag_recording)
+
+    def x_postion_status_callback(self, msg):
+        self.sensor_states['x_pos_status'] = msg.position_accuracy.x
+        #self.get_logger().info(f'Frequency_published {msg.position_accuracy.x}')
+
     def gps_postion_status_callback(self, msg):
         self.sensor_states['gps_pos_status'] = msg.status.type
-        self.get_logger().info(f'Frequency_published {msg.status.type}')
+        #self.get_logger().info(f'Frequency_published {msg.status.type}')
 
-    
     def gps_postion_status_callback2(self, msg):
-        self.get_logger().info('Received a message on /hus/imu/nav_sat_fix')
         self.sensor_states['gps_pos_status2'] = msg.status.solution_mode
-        self.get_logger().info(f'Frequency_published {msg.status.solution_mode}')
+        #self.get_logger().info(f'Frequency_published {msg.status.solution_mode}')
 
     def rtk_status_callback(self,msg):
         #self.get_logger().info('Received a message on /hus/imu/nav_sat_fix')
@@ -72,10 +77,10 @@ class SensorNode(Node):
 
     def check_rosbag_recording(self):
         if self.is_rosbag_recording():
-            self.get_logger().info("Rosbag is recording")
+            #self.get_logger().info("Rosbag is recording")
             self.sensor_states['rosbag_recording'] = True
         else:
-            self.get_logger().info("Rosbag is not recording")
+            #self.get_logger().info("Rosbag is not recording")
             self.sensor_states['rosbag_recording'] = False
 
     def is_rosbag_recording(self):
@@ -96,6 +101,7 @@ class SensorNode(Node):
         gps_pos_status_check = self.sensor_states.get('gps_pos_status')
         gps_pos_status_check2 = self.sensor_states.get('gps_pos_status2')
         lidar_status_check = self.sensor_states.get('lidar_frequency')
+        x_pos_status_check = self.sensor_states.get('x_pos_status')
         alert_msg = ErrorMsg()
         
         if rtk_status_check is not None:
@@ -103,11 +109,11 @@ class SensorNode(Node):
             if rtk_status_check !=0:
 
                 alert_msg.rtk_status = False
-                self.get_logger().info(f'status number {alert_msg.rtk_status}')
+                #self.get_logger().info(f'status number {alert_msg.rtk_status}')
             else:
                 
                 alert_msg.rtk_status= True
-                self.get_logger().info(f'status number {alert_msg.rtk_status}')
+                #self.get_logger().info(f'status number {alert_msg.rtk_status}')
         
         if lidar_status_check is not None:
             if lidar_status_check<8:
@@ -126,7 +132,14 @@ class SensorNode(Node):
         else:
             alert_msg.gps_position_status_validator2= False
 
-        self.get_logger().info(f'GPS STATUS {alert_msg.gps_position_status_validator}')
+        if abs(x_pos_status_check-.3)>0.025:
+            print(x_pos_status_check-.3)
+            alert_msg.x_pos =False
+        else:
+            alert_msg.x_pos = True
+
+        self.get_logger().info(f'STATUS {x_pos_status_check }')
+        self.get_logger().info(f'STATUS {alert_msg.x_pos }')
 
         self.alert_publisher.publish(alert_msg)
 
