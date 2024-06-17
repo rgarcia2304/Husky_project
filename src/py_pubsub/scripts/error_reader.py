@@ -18,8 +18,12 @@ class SensorReader(Node):
         self.localiation1_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization1_status_monitor_callback,10)
         self.localiation2_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization2_status_monitor_callback,10)
         self.xpos_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.xpos_monitor_callback,10)
+        self.ypos_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.ypos_monitor_callback,10)
+        self.zpos_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.zpos_monitor_callback,10)
 
+        self.current_zpos_status = None
         self.current_xpos_status = None
+        self.current_ypos_status = None
         self.current_rtk_status = None
         self.current_lidar_status = None
         self.current_localization1_status = None
@@ -58,10 +62,40 @@ class SensorReader(Node):
         #x positon light
         self.xpos_light= self.canvas.create_oval(150, 30, 160, 40, fill="yellow")
         self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
+        #y positon light
+        self.ypos_light= self.canvas.create_oval(180, 30, 190, 40, fill="yellow")
+        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
+        #y positon light
+        self.zpos_light= self.canvas.create_oval(210, 30, 220, 40, fill="yellow")
+        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()
         
+    def zpos_monitor_callback(self,msg):
+            if msg.z_pos==False:
+                self.current_zpos_status= False
+                if self.current_zpos_status == False:
+                    self.update_zpos_status_light("red")
+            else:
+                self.update_zpos_status_light("green")
+            self.get_logger().info(f'Received state {msg.z_pos}\n')
+    
+    def update_zpos_status_light(self, color):
+        self.canvas.itemconfig(self.zpos_light, fill=color)
+
+    def ypos_monitor_callback(self,msg):
+        if msg.y_pos==False:
+            self.current_ypos_status= False
+            if self.current_ypos_status == False:
+                self.update_ypos_status_light("red")
+        else:
+            self.update_ypos_status_light("green")
+        self.get_logger().info(f'Received state {msg.y_pos}\n')
+    
+    def update_ypos_status_light(self, color):
+        self.canvas.itemconfig(self.ypos_light, fill=color)
+
 
     def xpos_monitor_callback(self,msg):
         if msg.x_pos==False:
