@@ -11,15 +11,15 @@ class SensorReader(Node):
         super().__init__('error_reader')        
 
         # Create subscribers
-        self.status_callback = self.create_subscription(ErrorMsg,'temperature_alert',self.status_callback,10)
+        self.status_callback = self.create_subscription(ErrorMsg,'status_alert',self.status_callback,10)
 
         self.current_zpos_status = None
         self.current_xpos_status = None
         self.current_ypos_status = None
         self.current_rtk_status = None
         self.current_lidar_status = None
-        self.current_localization1_status = None
-        self.current_localization2_status = None
+        self.status_type_status = None
+        self.solution_mode_status = None
         self.init_ui()
 
     def monitor_callback(self, msg):
@@ -45,10 +45,10 @@ class SensorReader(Node):
         self.lidar_light= self.canvas.create_oval(60, 30, 70, 40, fill="yellow")
         self.canvas.create_text(140, 80, text=f"lidar_status", anchor=tk.CENTER)
         #localization check light 1
-        self.localization_light1= self.canvas.create_oval(90, 30, 100, 40, fill="yellow")
+        self.status_type_light= self.canvas.create_oval(90, 30, 100, 40, fill="yellow")
         self.canvas.create_text(240, 80, text=f"localiaztion1", anchor=tk.CENTER)
         #localization check light2
-        self.localization_light2= self.canvas.create_oval(120, 30, 130, 40, fill="yellow")
+        self.solution_mode_light= self.canvas.create_oval(120, 30, 130, 40, fill="yellow")
         self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #x positon light
         self.xpos_light= self.canvas.create_oval(150, 30, 160, 40, fill="yellow")
@@ -69,16 +69,16 @@ class SensorReader(Node):
         self.current_ypos_status = msg.z_pos
         self.current_rtk_status = msg.rtk_status
         self.current_lidar_status = msg.lidar_frequency_validator
-        self.current_localization1_status = msg.gps_position_status_validator
-        self.current_localization2_status = msg.gps_position_status_validator2
+        self.status_type_status = msg.status_type_validator
+        self.solution_mode_status = msg.solution_mode_validator
         #light updator based on status
         self.update_light(self.rtk_light,self.current_rtk_status)
         self.update_light(self.lidar_light,self.current_lidar_status)
-        self.update_light(self.localization_light1,self.current_xpos_status)
-        self.update_light(self.localization_light2,self.current_ypos_status)
+        self.update_light(self.status_type_light,self.current_xpos_status)
+        self.update_light(self.solution_mode_light,self.current_ypos_status)
         self.update_light(self.xpos_light,self.current_zpos_status)
-        self.update_light(self.ypos_light,self.current_localization1_status)
-        self.update_light(self.zpos_light,self.current_localization2_status)
+        self.update_light(self.ypos_light,self.status_type_status)
+        self.update_light(self.zpos_light,self.solution_mode_status)
 
     def update_light(self, light, status):
         color = 'green' if status else 'red'

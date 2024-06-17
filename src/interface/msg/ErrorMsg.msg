@@ -1,7 +1,7 @@
 
 bool rtk_status
-bool gps_position_status_validator
-bool gps_position_status_validator2
+bool status_type_validator
+bool solution_mode_validator
 bool lidar_frequency_validator
 bool x_pos
 bool y_pos
