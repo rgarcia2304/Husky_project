@@ -26,6 +26,7 @@ class SensorNode(Node):
             'x_pos_status': None,
             'y_pos_status': None,
             'z_pos_status': None,
+            'rosbag_recording':None
         }
         
         # Frequency monitoring attributes
@@ -112,6 +113,8 @@ class SensorNode(Node):
         x_pos_status_check = self.sensor_states.get('x_pos_status')
         y_pos_status_check = self.sensor_states.get('y_pos_status')
         z_pos_status_check = self.sensor_states.get('z_pos_status')
+        bag_recording_check = self.sensor_states.get('rosbag_recording')
+
         alert_msg = ErrorMsg()
         
         if rtk_status_check is not None:
@@ -137,6 +140,7 @@ class SensorNode(Node):
             alert_msg.gps_position_status_validator= False
 
         if gps_pos_status_check2 ==4:
+
             alert_msg.gps_position_status_validator2= True
         else:
             alert_msg.gps_position_status_validator2= False
@@ -156,14 +160,17 @@ class SensorNode(Node):
         else:
             alert_msg.y_pos = True
         
-        if abs(y_pos_status_check-.03)>0.025:
+        if abs(z_pos_status_check-.03)>0.025:
             alert_msg.z_pos =False
         else:
             alert_msg.z_pos = True
 
-
-        self.get_logger().info(f'STATUS {y_pos_status_check }')
-        self.get_logger().info(f'STATUS {alert_msg.y_pos }')
+        if bag_recording_check == False:
+            alert_msg.is_recording = False
+        else:
+            alert_msg.is_recording = True
+        self.get_logger().info(f'STATUS {alert_msg.is_recording}')
+        #self.get_logger().info(f'STATUS {aler_msg.y_pos }')
 
         self.alert_publisher.publish(alert_msg)
 
