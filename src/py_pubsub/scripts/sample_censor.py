@@ -22,7 +22,7 @@ class SensorNode(Node):
             'lidar_frequency': None,
             'rtk_status': None,
             'gps_pos_status': None,
-            'gps_pos_status2': None,
+            'solution_mode': None,
             'x_pos_status': None,
             'y_pos_status': None,
             'z_pos_status': None,

@@ -11,15 +11,7 @@ class SensorReader(Node):
         super().__init__('error_reader')        
 
         # Create subscribers
-        self.topic_monitor = self.create_subscription(String,'/state_topic',self.monitor_callback,10)
-        #rtk information
-        self.rtk_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.rtk_status_monitor_callback,10)
-        self.rtk_lidar_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.lidar_status_monitor_callback,10)
-        self.localiation1_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization1_status_monitor_callback,10)
-        self.localiation2_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization2_status_monitor_callback,10)
-        self.xpos_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.xpos_monitor_callback,10)
-        self.ypos_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.ypos_monitor_callback,10)
-        self.zpos_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.zpos_monitor_callback,10)
+        self.status_callback = self.create_subscription(ErrorMsg,'temperature_alert',self.status_callback,10)
 
         self.current_zpos_status = None
         self.current_xpos_status = None
@@ -28,7 +20,6 @@ class SensorReader(Node):
         self.current_lidar_status = None
         self.current_localization1_status = None
         self.current_localization2_status = None
-        self.access_dictionary = None
         self.init_ui()
 
     def monitor_callback(self, msg):
@@ -71,100 +62,29 @@ class SensorReader(Node):
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()
-        
-    def zpos_monitor_callback(self,msg):
-            if msg.z_pos==False:
-                self.current_zpos_status= False
-                if self.current_zpos_status == False:
-                    self.update_zpos_status_light("red")
-            else:
-                self.update_zpos_status_light("green")
-            self.get_logger().info(f'Received state {msg.z_pos}\n')
+
+    def status_callback(self,msg):
+        self.current_zpos_status = msg.z_pos
+        self.current_xpos_status = msg.x_pos
+        self.current_ypos_status = msg.z_pos
+        self.current_rtk_status = msg.rtk_status
+        self.current_lidar_status = msg.lidar_frequency_validator
+        self.current_localization1_status = msg.gps_position_status_validator
+        self.current_localization2_status = msg.gps_position_status_validator2
+        #light updator based on status
+        self.update_light(self.rtk_light,self.current_rtk_status)
+        self.update_light(self.lidar_light,self.current_lidar_status)
+        self.update_light(self.localization_light1,self.current_xpos_status)
+        self.update_light(self.localization_light2,self.current_ypos_status)
+        self.update_light(self.xpos_light,self.current_zpos_status)
+        self.update_light(self.ypos_light,self.current_localization1_status)
+        self.update_light(self.zpos_light,self.current_localization2_status)
+
+    def update_light(self, light, status):
+        color = 'green' if status else 'red'
+        if self.canvas is not None:
+            self.canvas.itemconfig(light, fill=color)
     
-    def update_zpos_status_light(self, color):
-        self.canvas.itemconfig(self.zpos_light, fill=color)
-
-    def ypos_monitor_callback(self,msg):
-        if msg.y_pos==False:
-            self.current_ypos_status= False
-            if self.current_ypos_status == False:
-                self.update_ypos_status_light("red")
-        else:
-            self.update_ypos_status_light("green")
-        self.get_logger().info(f'Received state {msg.y_pos}\n')
-    
-    def update_ypos_status_light(self, color):
-        self.canvas.itemconfig(self.ypos_light, fill=color)
-
-
-    def xpos_monitor_callback(self,msg):
-        if msg.x_pos==False:
-            self.current_xpos_status= False
-            if self.current_xpos_status == False:
-                self.update_xpos_status_light("red")
-        else:
-            self.update_xpos_status_light("green")
-        self.get_logger().info(f'Received state {msg.x_pos}\n')
-    
-    def update_xpos_status_light(self, color):
-        self.canvas.itemconfig(self.xpos_light, fill=color)
-
-    def rtk_status_monitor_callback(self,msg):
-
-        if msg.rtk_status==False:
-            self.current_rtk_status= False
-            if self.current_rtk_status == False:
-                self.update_rtk_status_light("red")
-        else:
-            self.update_rtk_status_light("green")
-        self.get_logger().info(f'Received state {msg.rtk_status}\n')
-
-
-    def update_rtk_status_light(self, color):
-        self.canvas.itemconfig(self.rtk_light, fill=color)
-
-    def lidar_status_monitor_callback(self,msg):
-
-        if msg.lidar_frequency_validator==False:
-            self.current_lidar_status= False
-            if self.current_lidar_status== False:
-                self.update_lidar_status_light("red")
-        else:
-            self.update_lidar_status_light("green")
-        self.get_logger().info(f'Received state {msg.lidar_frequency_validator}\n')
-
-
-    def update_lidar_status_light(self, color):
-        self.canvas.itemconfig(self.lidar_light, fill=color)
-
-    def localization1_status_monitor_callback(self,msg):
-
-        if msg.gps_position_status_validator==False:
-            self.current_localization1_status= False
-            if self.current_localization1_status== False:
-                self.update_localization1_status_light("red")
-        else:
-            self.update_localization1_status_light("green")
-        self.get_logger().info(f'Received state {msg.gps_position_status_validator}\n')
-
-
-    def update_localization1_status_light(self, color):
-        self.canvas.itemconfig(self.localization_light1, fill=color)
-
-    def localization2_status_monitor_callback(self,msg):
-
-        if msg.gps_position_status_validator2==False:
-            self.current_localization2_status= False
-            if self.current_localization2_status== False:
-                self.update_localization2_status_light("red")
-        else:
-            self.update_localization2_status_light("green")
-        self.get_logger().info(f'Received state {msg.gps_position_status_validator2}\n')
-
-
-    def update_localization2_status_light(self, color):
-        self.canvas.itemconfig(self.localization_light2, fill=color)
-
     def check_ros(self):
         rclpy.spin_once(self,timeout_sec=0.1)
         self.root.after(100,self.check_ros)
