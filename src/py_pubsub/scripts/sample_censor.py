@@ -24,6 +24,8 @@ class SensorNode(Node):
             'gps_pos_status': None,
             'gps_pos_status2': None,
             'x_pos_status': None,
+            'y_pos_status': None,
+            'z_pos_status': None,
         }
         
         # Frequency monitoring attributes
@@ -36,7 +38,8 @@ class SensorNode(Node):
         self.gps_position_status_subscriber = self.create_subscription(SbgGpsPos,'/hus/sbg/gps_pos',self.gps_postion_status_callback,10)
         self.gps_position_status_subscriber2 = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.gps_postion_status_callback2,10)
         self.x_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.x_postion_status_callback,10)
-        #self.gps_position_status_subscriber2 = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.gps_postion_status_callback2,10)
+        self.y_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.y_postion_status_callback,10)
+        self.z_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.z_postion_status_callback,10)
 
         self.rtk_gps_subscriber # prevent unused variable warning
         # Create publisher
@@ -54,6 +57,11 @@ class SensorNode(Node):
     def x_postion_status_callback(self, msg):
         self.sensor_states['x_pos_status'] = msg.position_accuracy.x
         #self.get_logger().info(f'Frequency_published {msg.position_accuracy.x}')
+    def y_postion_status_callback(self, msg):
+        self.sensor_states['y_pos_status'] = msg.position_accuracy.y
+
+    def z_postion_status_callback(self, msg):
+        self.sensor_states['z_pos_status'] = msg.position_accuracy.z
 
     def gps_postion_status_callback(self, msg):
         self.sensor_states['gps_pos_status'] = msg.status.type
@@ -102,6 +110,8 @@ class SensorNode(Node):
         gps_pos_status_check2 = self.sensor_states.get('gps_pos_status2')
         lidar_status_check = self.sensor_states.get('lidar_frequency')
         x_pos_status_check = self.sensor_states.get('x_pos_status')
+        y_pos_status_check = self.sensor_states.get('y_pos_status')
+        z_pos_status_check = self.sensor_states.get('z_pos_status')
         alert_msg = ErrorMsg()
         
         if rtk_status_check is not None:
@@ -118,7 +128,6 @@ class SensorNode(Node):
         if lidar_status_check is not None:
             if lidar_status_check<8:
                 alert_msg.lidar_frequency_validator = False
-
             else:
                 alert_msg.lidar_frequency_validator = True
         #checks for localizationn solutjion
@@ -132,14 +141,29 @@ class SensorNode(Node):
         else:
             alert_msg.gps_position_status_validator2= False
 
-        if abs(x_pos_status_check-.3)>0.025:
-            print(x_pos_status_check-.3)
+        if abs(x_pos_status_check-.03)>0.005:
             alert_msg.x_pos =False
         else:
             alert_msg.x_pos = True
 
-        self.get_logger().info(f'STATUS {x_pos_status_check }')
-        self.get_logger().info(f'STATUS {alert_msg.x_pos }')
+        if abs(y_pos_status_check-.03)>0.025:
+            alert_msg.y_pos =False
+        else:
+            alert_msg.y_pos = True
+
+        if abs(y_pos_status_check-.03)>0.025:
+            alert_msg.y_pos =False
+        else:
+            alert_msg.y_pos = True
+        
+        if abs(y_pos_status_check-.03)>0.025:
+            alert_msg.z_pos =False
+        else:
+            alert_msg.z_pos = True
+
+
+        self.get_logger().info(f'STATUS {y_pos_status_check }')
+        self.get_logger().info(f'STATUS {alert_msg.y_pos }')
 
         self.alert_publisher.publish(alert_msg)
 
