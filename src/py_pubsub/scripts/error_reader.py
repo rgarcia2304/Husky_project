@@ -17,7 +17,9 @@ class SensorReader(Node):
         self.rtk_lidar_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.lidar_status_monitor_callback,10)
         self.localiation1_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization1_status_monitor_callback,10)
         self.localiation2_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.localization2_status_monitor_callback,10)
+        self.xpos_status_reader = self.create_subscription(ErrorMsg,'temperature_alert',self.xpos_monitor_callback,10)
 
+        self.current_xpos_status = None
         self.current_rtk_status = None
         self.current_lidar_status = None
         self.current_localization1_status = None
@@ -42,21 +44,36 @@ class SensorReader(Node):
         self.canvas.pack()
 
         #rtk display
-        self.rtk_light= self.canvas.create_oval(30, 30, 60, 60, fill="yellow")
+        self.rtk_light= self.canvas.create_oval(30, 30, 40, 40, fill="yellow")
         self.canvas.create_text(40, 80, text=f"rtk_status", anchor=tk.CENTER)
         #lidar light
-        self.lidar_light= self.canvas.create_oval(130, 30, 160, 60, fill="yellow")
+        self.lidar_light= self.canvas.create_oval(60, 30, 70, 40, fill="yellow")
         self.canvas.create_text(140, 80, text=f"lidar_status", anchor=tk.CENTER)
         #localization check light 1
-        self.localization_light1= self.canvas.create_oval(230, 30, 260, 60, fill="yellow")
+        self.localization_light1= self.canvas.create_oval(90, 30, 100, 40, fill="yellow")
         self.canvas.create_text(240, 80, text=f"localiaztion1", anchor=tk.CENTER)
         #localization check light2
-        self.localization_light2= self.canvas.create_oval(330, 30, 360, 60, fill="yellow")
+        self.localization_light2= self.canvas.create_oval(120, 30, 130, 40, fill="yellow")
+        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
+        #x positon light
+        self.xpos_light= self.canvas.create_oval(150, 30, 160, 40, fill="yellow")
         self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()
         
+
+    def xpos_monitor_callback(self,msg):
+        if msg.x_pos==False:
+            self.current_xpos_status= False
+            if self.current_xpos_status == False:
+                self.update_xpos_status_light("red")
+        else:
+            self.update_xpos_status_light("green")
+        self.get_logger().info(f'Received state {msg.x_pos}\n')
+    
+    def update_xpos_status_light(self, color):
+        self.canvas.itemconfig(self.xpos_light, fill=color)
 
     def rtk_status_monitor_callback(self,msg):
 
