@@ -44,16 +44,16 @@ class SensorNode(Node):
 
         self.rtk_gps_subscriber # prevent unused variable warning
         # Create publisher
-        self.states_publisher = self.create_publisher(String, 'state_topic', 10)
+        #self.states_publisher = self.create_publisher(String, 'state_topic', 10)
         self.alert_publisher = self.create_publisher(ErrorMsg, 'status_alert', 10)
 
         # Create a timer to periodically check and publish state information
-        self.timer2 = self.create_timer(10.0, self.check_and_publish)
-        self.timer = self.create_timer(1.0,self.publish_alerts)
+        #self.timer2 = self.create_timer(10.0, self.check_and_publish)
+        self.timer = self.create_timer(.2,self.publish_alerts)
 
     # Initialize the time of the last LiDAR message
         self.last_lidar_time = None
-        self.rosbag_check_timer = self.create_timer(5.0, self.check_rosbag_recording)
+        self.rosbag_check_timer = self.create_timer(.1, self.check_rosbag_recording)
 
     def x_postion_status_callback(self, msg):
         self.sensor_states['x_pos_status'] = msg.position_accuracy.x
@@ -79,8 +79,11 @@ class SensorNode(Node):
 
     def lidar_callback(self, msg):
         current_time_seconds = self.get_clock().now().nanoseconds
+        #self.get_logger().info(f'Current Status: {current_time_seconds}')
         time_in_between_published_msgs = (current_time_seconds)-self.last_time_msg_published
+        #self.get_logger().info(f'Current Status: {time_in_between_published_msgs}')
         hz_calculator = (1/time_in_between_published_msgs) / .000000001
+        #self.get_logger().info(f'Hello: {hz_calculator}')
         self.sensor_states['lidar_frequency'] = hz_calculator
         self.last_time_msg_published = current_time_seconds
 
@@ -111,11 +114,11 @@ class SensorNode(Node):
             alert_msg.rtk_status = False
         else:
             alert_msg.rtk_status= True
-    
-        if self.sensor_states.get('lidar_frequency')<8:
-            alert_msg.lidar_frequency_validator = False
-        else:
-            alert_msg.lidar_frequency_validator = True
+        if self.sensor_states.get('lidar_frequency') is not None:
+            if self.sensor_states.get('lidar_frequency')<10:
+                alert_msg.lidar_frequency_validator = False
+            else:
+                alert_msg.lidar_frequency_validator = True
 
         #checks for localizationn solutjion
         if self.sensor_states.get('status_type') >=7 :
@@ -147,18 +150,15 @@ class SensorNode(Node):
             alert_msg.is_recording = False
         else:
             alert_msg.is_recording = True
-        self.get_logger().info(f'STATUS {alert_msg.is_recording}')
-        #self.get_logger().info(f'STATUS {aler_msg.y_pos }')
+        
+        self.get_logger().info(f'STATUS {alert_msg.lidar_frequency_validator}')
 
         self.alert_publisher.publish(alert_msg)
 
 def main(args=None):
     rclpy.init(args=args)
-    
     sensor_node = SensorNode()
-    
     rclpy.spin(sensor_node)
-    
     sensor_node.destroy_node()
     rclpy.shutdown()
 

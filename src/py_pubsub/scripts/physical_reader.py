@@ -56,18 +56,16 @@ class Physical_Sensor(Node):
     def status_callback(self,msg):
         self.get_logger().info(f'Current Status: {msg.lidar_frequency_validator}')
 
-        #FLASH LIGHT IF IT REACHES FALSE CONDITION
+        #FLASH LIGHT IF IT REACHES FALSE CONDITION TEST FOR LIDAR
         if msg.lidar_frequency_validator == False:
-            print('Hello')
             self.physical_hardware.set_relay_state(1)
-            time.sleep(1)
+            time.sleep(.05)
             self.physical_hardware.set_all_relays(False)
-
-            #self.physical_hardware.set_relay_state(10)
-        #else:
-            #self.physical_hardware.set_relay_state(110)
-            #self.physical_hardware.set_relay_state(102)
-
+        else:
+            self.physical_hardware.set_relay_state(2)
+            time.sleep(0.05)
+            self.physical_hardware.set_all_relays(False)
+            
 def main(args=None):
     rclpy.init(args=args)
     hardware_sensor = Physical_Sensor()
