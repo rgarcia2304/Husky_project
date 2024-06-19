@@ -53,28 +53,13 @@ class Physical_Sensor(Node):
         self.status_callback = self.create_subscription(ErrorMsg,'status_alert',self.status_callback,10)
         self.physical_hardware = relay_controls()
 
-        self.current_zpos_status = None
-        self.current_xpos_status = None
-        self.current_ypos_status = None
-        self.current_rtk_status = None
-        self.current_lidar_status = None
-        self.status_type_status = None
-        self.solution_mode_status = None
-
     def status_callback(self,msg):
-        self.current_zpos_status = msg.z_pos
-        self.current_xpos_status = msg.x_pos
-        self.current_ypos_status = msg.z_pos
-        self.current_rtk_status = msg.rtk_status
-        self.current_lidar_status = msg.lidar_frequency_validator
-        self.status_type_status = msg.status_type_validator
-        self.solution_mode_status = msg.solution_mode_validator
         self.get_logger().info(f'Current Status: {msg.lidar_frequency_validator}')
 
         #FLASH LIGHT IF IT REACHES FALSE CONDITION
         if msg.lidar_frequency_validator == False:
             print('Hello')
-            self.physical_hardware.set_relay_state(152)
+            self.physical_hardware.set_relay_state(1)
             time.sleep(1)
             self.physical_hardware.set_all_relays(False)
 

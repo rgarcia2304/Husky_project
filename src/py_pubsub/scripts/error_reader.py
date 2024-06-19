@@ -12,14 +12,6 @@ class SensorReader(Node):
 
         # Create subscribers
         self.status_callback = self.create_subscription(ErrorMsg,'status_alert',self.status_callback,10)
-
-        self.current_zpos_status = None
-        self.current_xpos_status = None
-        self.current_ypos_status = None
-        self.current_rtk_status = None
-        self.current_lidar_status = None
-        self.status_type_status = None
-        self.solution_mode_status = None
         self.init_ui()
 
     def monitor_callback(self, msg):
@@ -57,21 +49,14 @@ class SensorReader(Node):
         self.root.mainloop()
 
     def status_callback(self,msg):
-        self.current_zpos_status = msg.z_pos
-        self.current_xpos_status = msg.x_pos
-        self.current_ypos_status = msg.z_pos
-        self.current_rtk_status = msg.rtk_status
-        self.current_lidar_status = msg.lidar_frequency_validator
-        self.status_type_status = msg.status_type_validator
-        self.solution_mode_status = msg.solution_mode_validator
         #light updator based on status
-        self.update_light(self.rtk_light,self.current_rtk_status)
-        self.update_light(self.lidar_light,self.current_lidar_status)
-        self.update_light(self.status_type_light,self.current_xpos_status)
-        self.update_light(self.solution_mode_light,self.current_ypos_status)
-        self.update_light(self.xpos_light,self.current_zpos_status)
-        self.update_light(self.ypos_light,self.status_type_status)
-        self.update_light(self.zpos_light,self.solution_mode_status)
+        self.update_light(self.rtk_light,msg.rtk_status)
+        self.update_light(self.lidar_light,msg.lidar_frequency_validator)
+        self.update_light(self.status_type_light,msg.status_type_validator)
+        self.update_light(self.solution_mode_light,msg.solution_mode_validator)
+        self.update_light(self.xpos_light,msg.x_pos)
+        self.update_light(self.ypos_light,msg.y_pos)
+        self.update_light(self.zpos_light,msg.z_pos)
 
     def update_light(self, light, status):
         color = 'green' if status else 'red'
@@ -90,8 +75,6 @@ class SensorReader(Node):
 def main(args=None):
     rclpy.init(args=args)
     sensor_reader = SensorReader()
-    #rclpy.spin(sensor_reader)
-
     try:
         sensor_reader.init_ui()
     except KeyboardInterrupt:
