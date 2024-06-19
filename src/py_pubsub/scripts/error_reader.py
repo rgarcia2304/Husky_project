@@ -40,25 +40,18 @@ class SensorReader(Node):
 
         #rtk display
         self.rtk_light= self.canvas.create_oval(30, 30, 40, 40, fill="yellow")
-        self.canvas.create_text(40, 80, text=f"rtk_status", anchor=tk.CENTER)
         #lidar light
         self.lidar_light= self.canvas.create_oval(60, 30, 70, 40, fill="yellow")
-        self.canvas.create_text(140, 80, text=f"lidar_status", anchor=tk.CENTER)
         #localization check light 1
         self.status_type_light= self.canvas.create_oval(90, 30, 100, 40, fill="yellow")
-        self.canvas.create_text(240, 80, text=f"localiaztion1", anchor=tk.CENTER)
         #localization check light2
         self.solution_mode_light= self.canvas.create_oval(120, 30, 130, 40, fill="yellow")
-        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #x positon light
         self.xpos_light= self.canvas.create_oval(150, 30, 160, 40, fill="yellow")
-        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #y positon light
         self.ypos_light= self.canvas.create_oval(180, 30, 190, 40, fill="yellow")
-        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #y positon light
         self.zpos_light= self.canvas.create_oval(210, 30, 220, 40, fill="yellow")
-        self.canvas.create_text(340, 80, text=f"localization2", anchor=tk.CENTER)
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()

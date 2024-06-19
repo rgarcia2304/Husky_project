@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
                 'talker = scripts.error_reader:main',
                 'experiment= scripts.sample_censor:main',
+                'hardware= scripts.physical_reader:main',
         ],
     },
 )
