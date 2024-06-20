@@ -52,35 +52,45 @@ class Physical_Sensor(Node):
         super().__init__('hardware_node')
         self.status_callback = self.create_subscription(ErrorMsg,'status_alert',self.status_callback,10)
         self.physical_hardware = relay_controls()
+        self.frequency= 1
+        #Colors for light are 1 red, 2 orange, 4 green
+        self.color = 0
 
     def status_callback(self,msg):
-        self.get_logger().info(f'Current Status: {msg.lidar_frequency_validator}')
-
-        #FLASH LIGHT IF IT REACHES FALSE CONDITION TEST FOR LIDAR
-        if msg.lidar_frequency_validator == False:
-            self.physical_hardware.set_relay_state(1)
-            time.sleep(.05)
-            self.physical_hardware.set_all_relays(False)
+        #establish conditons and set variables here
+        if msg.lidar_frequency_validator==False:
+            self.frequency = 0.25
+            self.color = 1
         else:
-            self.physical_hardware.set_relay_state(2)
-            time.sleep(0.05)
-            self.physical_hardware.set_all_relays(False)
+            self.frequency =0.25
+            self.color =4
+
+    def light_operations(self):
+        #color setting operations and blinking frequency
+        time.sleep(self.frequency)
+        self.physical_hardware.set_relay_state(self.color)
+        time.sleep(self.frequency)
+        self.physical_hardware.set_all_relays(False)
+        
+    def light_runner(self):
+        while rclpy.ok():
+            self.light_operations()
+            rclpy.spin_once(self,timeout_sec=0.1)
+
             
 def main(args=None):
     rclpy.init(args=args)
     hardware_sensor = Physical_Sensor()
-    hardware_sensor.physical_hardware.open_ports('/dev/ttyACM0', 9600,1)
+    hardware_sensor.physical_hardware.open_ports('/dev/ttyACM1', 9600,1)
     hardware_sensor.physical_hardware.get_sw_version()
     hardware_sensor.physical_hardware.set_all_relays(True)
-    rclpy.spin(hardware_sensor)
+    hardware_sensor.light_runner()
     hardware_sensor.destroy_node()
     hardware_sensor.physical_hardware.close_ports()
     rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
-
-
 
 
         

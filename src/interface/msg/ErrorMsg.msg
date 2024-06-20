@@ -7,3 +7,4 @@ bool x_pos
 bool y_pos
 bool z_pos
 bool is_recording
+bool light_status
