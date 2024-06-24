@@ -39,11 +39,10 @@ class SensorReader(Node):
         #localization check light2
         self.solution_mode_light= self.canvas.create_oval(120, 30, 130, 40, fill="yellow")
         #x positon light
-        self.xpos_light= self.canvas.create_oval(150, 30, 160, 40, fill="yellow")
+        self.pos_light= self.canvas.create_oval(150, 30, 160, 40, fill="yellow")
         #y positon light
-        self.ypos_light= self.canvas.create_oval(180, 30, 190, 40, fill="yellow")
-        #y positon light
-        self.zpos_light= self.canvas.create_oval(210, 30, 220, 40, fill="yellow")
+        self.battery_light= self.canvas.create_oval(180, 30, 190, 40, fill="yellow")
+
         #closing actions
         self.root.after(100, self.check_ros)
         self.root.mainloop()
@@ -54,9 +53,8 @@ class SensorReader(Node):
         self.update_light(self.lidar_light,msg.lidar_frequency_validator)
         self.update_light(self.status_type_light,msg.status_type_validator)
         self.update_light(self.solution_mode_light,msg.solution_mode_validator)
-        self.update_light(self.xpos_light,msg.x_pos)
-        self.update_light(self.ypos_light,msg.y_pos)
-        self.update_light(self.zpos_light,msg.z_pos)
+        self.update_light(self.pos_light,msg.position_status)
+        self.update_light(self.battery_light,msg.battery_isok)
 
     def update_light(self, light, status):
         color = 'green' if status else 'red'

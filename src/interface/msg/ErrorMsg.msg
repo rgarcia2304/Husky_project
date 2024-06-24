@@ -8,3 +8,5 @@ bool y_pos
 bool z_pos
 bool is_recording
 bool light_status
+bool position_status
+bool battery_isok

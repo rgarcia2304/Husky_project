@@ -55,17 +55,42 @@ class Physical_Sensor(Node):
         self.frequency= 1
         #Colors for light are 1 red, 2 orange, 4 green
         self.color = 0
+        self.action = "none"
 
     def status_callback(self,msg):
+
         #establish conditons and set variables here
         if msg.lidar_frequency_validator==False:
-            self.frequency = 0.25
+            self.frequency = 1
             self.color = 1
-        else:
-            self.frequency =0.25
-            self.color =4
+            self.action = "blink"
+            self.light_controller()
 
-    def light_operations(self):
+        if  msg.battery_isok == False:
+            self.frequency = 1
+            self.color = 1
+            self.action = "set_light_color"
+            self.light_controller()
+        else:
+            self.frequency = 4
+            self.color = 1
+            self.action = "set_light_color"
+            self.light_controller()
+
+    def light_controller(self):
+        if self.action == "none":
+            self.set_light_color()
+        if self.action == "blink":
+            self.blink_light()
+        
+        if self.action =="set_light_color":
+            self.set_light_color()
+
+    def set_light_color(self):
+        time.sleep(1)
+        self.physical_hardware.set_relay_state(self.color)
+        
+    def blink_light(self):
         #color setting operations and blinking frequency
         time.sleep(self.frequency)
         self.physical_hardware.set_relay_state(self.color)
@@ -74,19 +99,20 @@ class Physical_Sensor(Node):
         
     def light_runner(self):
         while rclpy.ok():
-            self.light_operations()
+            self.light_controller()
             rclpy.spin_once(self,timeout_sec=0.1)
 
             
 def main(args=None):
     rclpy.init(args=args)
     hardware_sensor = Physical_Sensor()
-    hardware_sensor.physical_hardware.open_ports('/dev/ttyACM1', 9600,1)
+    hardware_sensor.physical_hardware.open_ports('/dev/ttyACM2', 9600,1)
     hardware_sensor.physical_hardware.get_sw_version()
     hardware_sensor.physical_hardware.set_all_relays(True)
     hardware_sensor.light_runner()
     hardware_sensor.destroy_node()
     hardware_sensor.physical_hardware.close_ports()
+    hardware_sensor.physical_hardware.set_all_relays(False)
     rclpy.shutdown()
 
 if __name__ == '__main__':

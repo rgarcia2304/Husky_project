@@ -4,10 +4,11 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import String  # For publishing sensor state as string
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import PointCloud2, Temperature, NavSatFix
+from sensor_msgs.msg import PointCloud2, Temperature, NavSatFix, BatteryState
 from sbg_driver.msg import SbgGpsPos, SbgEkfNav
 from geometry_msgs.msg import TwistStamped
 import json
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from interface.msg import ErrorMsg
 import time
 import psutil
@@ -23,11 +24,15 @@ class SensorNode(Node):
             'rtk_status': None,
             'status_type': None,
             'solution_mode_status': None,
-            'x_pos_status': None,
-            'y_pos_status': None,
-            'z_pos_status': None,
-            'rosbag_recording':None
+            'position_status':None,
+            'rosbag_recording':None,
+            'battery_status':None,
         }
+        qos_profile = QoSProfile(
+            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+            depth=1
+        )
         
         # Frequency monitoring attributes
         self.last_time_msg_published = 0
@@ -38,31 +43,27 @@ class SensorNode(Node):
         #Both of these are used to validate the positon solution
         self.status_type_subscriber = self.create_subscription(SbgGpsPos,'/hus/sbg/gps_pos',self.status_type_callback,10)
         self.solution_status_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.solution_mode_status_callback,10)
-        self.x_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.x_postion_status_callback,10)
-        self.y_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.y_postion_status_callback,10)
-        self.z_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.z_postion_status_callback,10)
-
+        self.x_position_accuracy_subscriber = self.create_subscription(SbgEkfNav,'/hus/sbg/ekf_nav',self.postion_status_callback,10)
+        self.battery_voltage_subscriber = self.create_subscription(BatteryState,'/hus/platform/bms/state',self.battery_status_callback,qos_profile)
         self.rtk_gps_subscriber # prevent unused variable warning
         # Create publisher
-        #self.states_publisher = self.create_publisher(String, 'state_topic', 10)
+        self.states_publisher = self.create_publisher(String, 'state_topic', 10)
         self.alert_publisher = self.create_publisher(ErrorMsg, 'status_alert', 10)
 
         # Create a timer to periodically check and publish state information
-        #self.timer2 = self.create_timer(10.0, self.check_and_publish)
+        self.timer2 = self.create_timer(1, self.check_and_publish)
         self.timer = self.create_timer(.2,self.publish_alerts)
 
     # Initialize the time of the last LiDAR message
         self.last_lidar_time = None
         self.rosbag_check_timer = self.create_timer(.1, self.check_rosbag_recording)
 
-    def x_postion_status_callback(self, msg):
-        self.sensor_states['x_pos_status'] = msg.position_accuracy.x
-        #self.get_logger().info(f'Frequency_published {msg.position_accuracy.x}')
-    def y_postion_status_callback(self, msg):
-        self.sensor_states['y_pos_status'] = msg.position_accuracy.y
+    def battery_status_callback(self, msg):
+        self.sensor_states['battery_status'] = msg.voltage
 
-    def z_postion_status_callback(self, msg):
-        self.sensor_states['z_pos_status'] = msg.position_accuracy.z
+    def postion_status_callback(self, msg):
+        position_calculator = (msg.position_accuracy.x)*(msg.position_accuracy.z) * (msg.position_accuracy.y)
+        self.sensor_states['position_status'] = position_calculator
 
     def status_type_callback(self, msg):
         self.sensor_states['status_type'] = msg.status.type
@@ -106,6 +107,7 @@ class SensorNode(Node):
         state_msg = String()
         # Convert dictionary to JSON string for publishing
         state_msg.data = json.dumps(self.sensor_states)
+        self.get_logger().info(f'Current Status: {state_msg.data}')
         self.states_publisher.publish(state_msg)
 
     def publish_alerts(self):       
@@ -115,43 +117,40 @@ class SensorNode(Node):
         else:
             alert_msg.rtk_status= True
         if self.sensor_states.get('lidar_frequency') is not None:
-            if self.sensor_states.get('lidar_frequency')<10:
+            if self.sensor_states.get('lidar_frequency')<1:
                 alert_msg.lidar_frequency_validator = False
             else:
                 alert_msg.lidar_frequency_validator = True
 
-        #checks for localizationn solutjion
-        if self.sensor_states.get('status_type') >=7 :
-            alert_msg.status_type_validator= True
-        else:
-            alert_msg.status_type_validator = False
+        #checks for localizationn solutjio
+        if self.sensor_states.get('status_type') != None:
+            if self.sensor_states.get('status_type') >=7 :
+                alert_msg.status_type_validator= True
+            else:
+                alert_msg.status_type_validator = False
 
         if self.sensor_states.get('solution_mode_status') ==4:
             alert_msg.solution_mode_validator= True
         else:
             alert_msg.solution_mode_validator= False
 
-        if abs(self.sensor_states.get('x_pos_status')-.03)>0.005:
-            alert_msg.x_pos =False
+        if self.sensor_states.get('position_status') > 0.00002:
+            alert_msg.position_status = False
         else:
-            alert_msg.x_pos = True
-
-        if abs(self.sensor_states.get('y_pos_status')-.03)>0.005:
-            alert_msg.y_pos =False
-        else:
-            alert_msg.y_pos = True
-        
-        if abs(self.sensor_states.get('z_pos_status')-.03)>0.025:
-            alert_msg.z_pos =False
-        else:
-            alert_msg.z_pos = True
+            alert_msg.position_status = True
 
         if self.sensor_states.get('rosbag_recording') == False:
             alert_msg.is_recording = False
         else:
             alert_msg.is_recording = True
         
-        self.get_logger().info(f'STATUS {alert_msg.lidar_frequency_validator}')
+        if self.sensor_states.get('battery_status') != None:
+
+            if self.sensor_states.get('battery_status') < 25:
+                alert_msg.battery_isok = False
+            else:
+                alert_msg.battery_isok = True
+        self.get_logger().info(f'Current Status: {alert_msg.battery_isok}')
 
         self.alert_publisher.publish(alert_msg)
 
