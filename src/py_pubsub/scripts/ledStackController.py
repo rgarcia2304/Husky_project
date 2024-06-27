@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 import json
-from interface.msg import huskyStateStatus
+from interface.msg import HuskyStateStatus
 import tkinter as tk
 
 class relay_controls():
@@ -45,12 +45,12 @@ class relay_controls():
         current_state=self.ser.read(size=1)
         print(current_state)
 
-class Physical_Sensor(Node):
+class ledStackController(Node):
 
     def __init__(self):
         
         super().__init__('hardware_node')
-        self.status_callback = self.create_subscription(huskyStateStatus,'status_alert',self.status_callback,10)
+        self.status_callback = self.create_subscription(HuskyStateStatus,'status_alert',self.status_callback,10)
         self.physical_hardware = relay_controls()
         self.frequency= 1
         #Colors for light are 1 red, 2 orange, 4 green
@@ -143,7 +143,7 @@ class Physical_Sensor(Node):
             
 def main(args=None):
     rclpy.init(args=args)
-    hardware_sensor = Physical_Sensor()
+    hardware_sensor = ledStackController()
     hardware_sensor.physical_hardware.open_ports('/dev/ttyACM0', 9600,1)
     hardware_sensor.physical_hardware.get_sw_version()
     hardware_sensor.physical_hardware.set_all_relays(True)

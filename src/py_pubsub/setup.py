@@ -20,9 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-                'talker = scripts.error_reader:main',
-                'experiment= scripts.sample_censor:main',
-                'hardware= scripts.physical_reader:main',
+                'talker = scripts.digitalStateDisplay:main',
+                'experiment= scripts.huskyStatePublisher:main',
+                'hardware= scripts.ledStackController:main',
         ],
     },
 )

@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 import json
-from interface.msg import huskyStateStatus
+from interface.msg import HuskyStateStatus
 import tkinter as tk
 
 
@@ -12,7 +12,7 @@ class digitalStateDisplay(Node):
     def __init__(self):
         super().__init__('error_reader')        
         # Create subscribers
-        self.status_callback = self.create_subscription(huskyStateStatus,'status_alert',self.status_callback,10)
+        self.status_callback = self.create_subscription(HuskyStateStatus,'status_alert',self.status_callback,10)
         self.init_ui()
 
     def monitor_callback(self, msg):

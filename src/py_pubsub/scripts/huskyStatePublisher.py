@@ -7,7 +7,7 @@ from sensor_msgs.msg import PointCloud2, NavSatFix, BatteryState
 from sbg_driver.msg import SbgGpsPos, SbgEkfNav
 import json
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
-from interface.msg import ErrorMsg
+from interface.msg import HuskyStateStatus
 import time
 import psutil
 import subprocess
@@ -48,7 +48,7 @@ class huskyStatePublisher(Node):
         # Create publisher for all data json dictionary representation
         self.states_publisher = self.create_publisher(String, 'state_topic', 10)
         #Creates publishers that updates all are state messages 
-        self.alert_publisher = self.create_publisher(ErrorMsg, 'status_alert', 10)
+        self.alert_publisher = self.create_publisher(HuskyStateStatus, 'status_alert', 10)
         # Create a timer to periodically check and publish state information
         self.timer2 = self.create_timer(1, self.check_and_publish)
         self.timer = self.create_timer(.2,self.publish_alerts)
@@ -110,7 +110,7 @@ class huskyStatePublisher(Node):
         self.states_publisher.publish(state_msg)
 
     def publish_alerts(self):       
-        alert_msg = ErrorMsg()
+        alert_msg = HuskyStateStatus()
 
         #conditonals for determining whether states are valid or not
         #conditonal for the rtk_status
@@ -156,7 +156,6 @@ class huskyStatePublisher(Node):
                 alert_msg.battery_isok = False
             else:
                 alert_msg.battery_isok = True
-        self.get_logger().info(f'Current Status: {alert_msg.battery_isok}')
 
         self.alert_publisher.publish(alert_msg)
 
