@@ -3,6 +3,7 @@ import time
 
 class relay_controls():
 
+
     def __init__(self):
         self.ser = None
 
@@ -23,8 +24,6 @@ class relay_controls():
         relay_num.to_bytes(1,'big')
         self.ser.write(bytes([0x5C, relay_num]))
     
-           # write a string
-        
     def set_all_relays(self,state):
         num=0
         if state==True:
@@ -42,19 +41,4 @@ class relay_controls():
         print(current_state)
 
 
-def main():
-    loc = relay_controls()
-    loc.open_ports('/dev/ttyACM1', 9600,1)
-    loc.set_all_relays(False)
-    time.sleep(2)
-    #loc.set_all_relays(True)
-    loc.get_sw_version()
-    time.sleep(3)
-    #loc.set_relay_state()
-    loc.get_state(111)
-    loc.close_ports()
-
-
-if __name__ == '__main__':
-    main()
  
