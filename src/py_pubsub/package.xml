@@ -13,7 +13,9 @@
   <build_depend>rosidl_default_generators</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>sbg_driver</build_depend>
+  <build_depend>relayControlsAPI</build_depend>
 
+  <exec_depend>relayControlsAPI</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
