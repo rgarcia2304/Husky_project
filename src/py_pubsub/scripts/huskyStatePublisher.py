@@ -128,12 +128,14 @@ class HuskyStatePublisher(Node):
         alert_msg.solution_mode_validator = self.sensor_states.get('solution_mode_status') == 4
 
         if self.sensor_states.get('position_status') is not None:
-            alert_msg.position_status = self.sensor_states.get('position_status') <= 0.000002
+            alert_msg.position_status = self.sensor_states.get('position_status') <= 0.00002
 
         alert_msg.is_recording = self.sensor_states.get('rosbag_recording', False)
 
         if self.sensor_states.get('battery_status') is not None:
-            alert_msg.battery_isok = self.sensor_states.get('battery_status') >= 24
+            alert_msg.battery_isok = self.sensor_states.get('battery_status') >= 24.2
+            battery_status= self.sensor_states.get('battery_status')
+            self.get_logger().info(f'Current Status: {battery_status}')
 
         self.alert_publisher.publish(alert_msg)
 
