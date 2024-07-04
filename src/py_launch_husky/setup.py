@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer='Your Name',
     maintainer_email='your_email@example.com',
-    description='Launch files for py_pubsub package',
+    description='Launch files for husky_sensors_monitoring package',
     license='Your license',
     tests_require=['pytest'],
     entry_points={

@@ -40,6 +40,8 @@ class digitalStateDisplay(Node):
         self.root.after(100, self.check_ros)
         self.root.mainloop()
 
+    
+
     def status_callback(self,msg):
         #light updator based on current status
         self.update_circle(self.rtk_circle,msg.rtk_status)

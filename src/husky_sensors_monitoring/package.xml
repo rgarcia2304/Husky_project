@@ -1,5 +1,5 @@
 <package format="3">
-  <name>py_pubsub</name>
+  <name>husky_sensors_monitoring</name>
   <version>0.0.0</version>
   <description>Sample</description>
   <maintainer email="rgarcia22141@gmail.com">rgarcia</maintainer>

@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'py_pubsub'
+package_name = 'husky_sensors_monitoring'
 
 setup(
     name=package_name,

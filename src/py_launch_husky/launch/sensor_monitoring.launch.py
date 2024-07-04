@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription([
         Node(
-            package='py_pubsub',
+            package='husky_sensors_monitoring',
             executable='talker',
             name='digital_state_display'
         ),
