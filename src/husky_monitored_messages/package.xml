@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>interface</name>
+  <name>husky_monitored_messages</name>
   <version>0.0.0</version>
   <description>Example of custom message generation</description>
   <maintainer email="rgarcia22141@gmail.com">rgarcia</maintainer>

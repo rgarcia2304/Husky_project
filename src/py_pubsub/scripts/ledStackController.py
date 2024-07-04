@@ -1,4 +1,3 @@
-
 import os
 import sys
 
@@ -12,7 +11,7 @@ sys.path.append(current_dir)
 import time
 import rclpy
 from rclpy.node import Node
-from interface.msg import HuskyStateStatus
+from husky_monitored_messages.msg import HuskyStateStatus
 import relayControlsAPI
 
 class LedStackController(Node):
@@ -61,7 +60,7 @@ class LedStackController(Node):
             self.led_stack_status["green"] = 0.0
             self.active_light = "red"
         elif self.sensor_status.position_status == False:
-            self.led_stack_status["red"] = 2.0
+            self.led_stack_status["red"] = 0.1
             self.led_stack_status["orange"] = 0.0
             self.led_stack_status["green"] = 0.0
             self.active_light = "red"
@@ -76,13 +75,13 @@ class LedStackController(Node):
             self.led_stack_status["green"] = 0.0
             self.active_light = "red"
         elif self.sensor_status.is_recording == False:
-            self.led_stack_status["green"] = 0.8
+            self.led_stack_status["green"] = 0.5
             self.led_stack_status["orange"] = 0.0
             self.led_stack_status["red"] = 0.0
             self.active_light = "green"
         else:
-            self.led_stack_status["green"] = 0.0
-            self.led_stack_status["orange"] = 0.3
+            self.led_stack_status["green"] = 2.0
+            self.led_stack_status["orange"] = 0.0
             self.led_stack_status["red"] = 0.0
             self.active_light = "green"
 
@@ -140,7 +139,7 @@ class LedStackController(Node):
 def main(args=None):
     rclpy.init(args=args)
     hardware_sensor_node = LedStackController()
-    hardware_sensor_node.physical_hardware.open_ports('/dev/ttyACM1', 9600, 1)
+    hardware_sensor_node.physical_hardware.open_ports('/dev/ttyACM0', 9600, 1)
     hardware_sensor_node.physical_hardware.get_sw_version()
     hardware_sensor_node.physical_hardware.set_all_relays(True)
     rclpy.spin(hardware_sensor_node)  # Spin the node to keep it alive and processing callbacks
@@ -152,17 +151,3 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 
-def main(args=None):
-    rclpy.init(args=args)
-    hardware_sensor_node = LedStackController()
-    hardware_sensor_node.physical_hardware.open_ports('/dev/ttyACM1', 9600, 1)
-    hardware_sensor_node.physical_hardware.get_sw_version()
-    hardware_sensor_node.physical_hardware.set_all_relays(True)
-    rclpy.spin(hardware_sensor_node)  # Spin the node to keep it alive and processing callbacks
-    hardware_sensor_node.destroy_node()
-    hardware_sensor_node.physical_hardware.close_ports()
-    hardware_sensor_node.physical_hardware.set_all_relays(False)
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()

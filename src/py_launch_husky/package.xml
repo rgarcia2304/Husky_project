@@ -1,0 +1,13 @@
+<package format="2">
+  <name>py_launch_husky</name>
+  <version>0.0.0</version>
+  <description>Package containing launch files for py_pubsub</description>
+  <maintainer email="your_email@example.com">Your Name</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

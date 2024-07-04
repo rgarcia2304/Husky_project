@@ -2,7 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from interface.msg import HuskyStateStatus
+from husky_monitored_messages.msg import HuskyStateStatus
 import tkinter as tk
 
 

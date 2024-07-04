@@ -6,7 +6,7 @@ from sensor_msgs.msg import PointCloud2, NavSatFix, BatteryState
 from sbg_driver.msg import SbgGpsPos, SbgEkfNav
 import json
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
-from interface.msg import HuskyStateStatus
+from husky_monitored_messages.msg import HuskyStateStatus
 import time
 import psutil
 import subprocess
