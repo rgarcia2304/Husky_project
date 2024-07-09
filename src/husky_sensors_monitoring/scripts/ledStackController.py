@@ -64,7 +64,7 @@ class LedStackController(Node):
             self.led_stack_status["green"] = 0.0
             self.active_light = "red"
         elif self.sensor_status.position_status == False:
-            self.led_stack_status["red"] = 0.1
+            self.led_stack_status["red"] = 2.0
             self.led_stack_status["orange"] = 0.0
             self.led_stack_status["green"] = 0.0
             self.active_light = "red"
@@ -149,6 +149,7 @@ def main(args=None):
     # Main function to initialize the node and start the hardware control
     rclpy.init(args=args)
     hardware_sensor_node = LedStackController()
+    
     hardware_sensor_node.physical_hardware.open_ports('/dev/ttyACM0', 9600, 1)
     hardware_sensor_node.physical_hardware.get_sw_version()
     hardware_sensor_node.physical_hardware.set_all_relays(True)
